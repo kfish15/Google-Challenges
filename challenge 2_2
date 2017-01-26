@@ -1,0 +1,155 @@
+import copy as c
+   
+# +17, -17, +6, -6, +10, -10, +15, -15
+# 8 possible moves at all times
+
+def answer(src,dest):
+    moves = [-17,-15,-10,-6,6,10,15,17]                             # each move a knight can make is characterized as an integer
+    right_moves = [-17,-10,6,15]                                    # moves to the right, which are used when defining the edge of the board (not allowing the algorithm's knight to move off the board)
+    left_moves = [-15,-6,10,17]                                     # moves to the left, which are used when defining the edge of the board
+    next_right_bad_moves = [-10,6]                                  # moves that a knight cant make if it is in the second column from the end on the right side of the board (otherwise the piece would move off the board)                                     
+    next_left_bad_moves= [-6,10]                                    # moves that a knight cant make in the second column from the end on the left side
+    furthest_left_bounds = [0,8,16,24,32,40,48,56]                  # integer assignments for first column on left of board
+    next_left_bounds = [1,9,17,25,33,41,49,57]                      # integer assignments for second column from left edge of board
+    furthest_right_bounds = [7,15,23,31,39,47,55,63]                # integer assignments for first column on right of board/ right edge of board
+    next_right_bounds = [6,14,22,30,38,46,54,62]                    # integer assignments for second column from right edge of board
+    possible_moves_int = 8                                          # total possible moves from any spot is 8, but some may be disqualified later if they move the piece off the board
+    step = 0                                                        # for each set of moves, we add one to step. First move is 0, which means that we add 1 to the end result
+    moves_index = 0                                                 # used to iterate through list of possible moves
+    temp_list = []
+    all_paths = [[] for x in xrange(possible_moves_int)]
+    while (1):
+        if src == dest:                                             # if start and end square are the same, get out of the loop! This is the result of test 3, which took me a bit to get at the end 
+            return step
+        if step == 0:
+            for x in all_paths:                                     # a "path" is a set of moves the piece can make from its current spot. 
+                x.append(moves[moves_index] + src)                  # starting square is src, and we create a list for each possible move from that square which we get by iterating through the moves list
+                moves_index += 1                                    # iterate through the moves list on each step
+        elif step != 0:                                             
+            for path in all_paths:
+                new_moves = [[] for x in xrange(possible_moves_int)]    # create 8 lists for each move from the currents square. For each path (list) in all paths we create 8 lists
+                for thing in new_moves:
+                    for x in path:
+                        thing.append(x)
+                    thing.append(moves[moves_index] + path[step-1]) 
+                    moves_index += 1
+                for y in new_moves:                             
+                    temp_list.append(y)
+                moves_index = 0
+        if step == 0:                                                   # Beginning of checks for illegal moves and for hitting the destination square
+            temp_list = c.deepcopy(all_paths)
+            for path in all_paths:                                         # horizontal (top and bottom) board checks. Gets ride of moves that leave those edges of the board
+                if path[step] < 0:                                         
+                    temp_list.remove(path)
+                elif path[step] > 63:
+                    temp_list.remove(path)
+            all_paths = c.deepcopy(temp_list)                           # for each check we make modifications to a temporary list, then 
+            for path in all_paths:                 
+                if src in furthest_left_bounds:                         # if the knight is in the furthest left column, checks to make sure no illegal moves are made that move the piece off the left edge of the board
+                    a = src - path[step]                                # the a values in the checks section for step = 0 are unique to step = 0. 
+                    if a in left_moves:
+                        temp_list.remove(path)                          # modifications to a temporary list, and then core list (all_paths) copies those changes
+            all_paths = c.deepcopy(temp_list)
+            for path in all_paths:                 
+                if src in furthest_right_bounds:                        # if the knight is in the farthest right column, we eliminate all moves that move the piece off the right side of the board
+                    a = src - path[step]
+                    if a in right_moves:
+                        temp_list.remove(path) 
+            all_paths = c.deepcopy(temp_list)
+            for path in all_paths:                 
+                if src in next_right_bounds:                            # removes all illegal moves from the second furthest column on right
+                    a = src - path[step]
+                    if a in next_right_bad_moves:
+                        temp_list.remove(path) 
+            all_paths = c.deepcopy(temp_list)
+            for path in all_paths:
+                if src in next_left_bounds:                             # removes all illegal moves from the second furthest column on left that would put the piece off the left side of the board
+                    a = src - path[step]
+                    if a in next_left_bad_moves:
+                        temp_list.remove(path) 
+            all_paths = c.deepcopy(temp_list)
+            for path in all_paths:
+                if path[step] == dest:                                  # if the piece reaches its destination, return step + 1
+                    return step+1                                       # the "+1" is included because move 0 is actually move 1 (moving from src to a square) but we dont add 1 to step until the end of the loop
+        if step != 0:                                                   # all checks for steps > 0 are the same as when steps = 0, except difference (a value) is different.                                   
+            all_paths = c.deepcopy(temp_list)
+            for path in all_paths:                 
+                if path[step] < 0:
+                    temp_list.remove(path)
+                elif path[step] > 63:
+                    temp_list.remove(path)
+            all_paths = c.deepcopy(temp_list)
+            for path in all_paths:                 
+                if path[step] in furthest_left_bounds:                  # this loop removes all illegal leftward moves for pieces in furthest left column
+                    a = path[step] - path[step-1]                       # the a values in each check for step != 0 are what distinguishes these checks from the step = 0 checks. 
+                    if a in left_moves:
+                        temp_list.remove(path)
+            all_paths = c.deepcopy(temp_list)
+            for path in all_paths:                 
+                if path[step] in furthest_right_bounds:                 # this loop removes all illegal rightward moves for pieces in furthest right column            
+                    a = path[step] - path[step-1]   
+                    if a in right_moves:
+                        temp_list.remove(path) 
+            all_paths = c.deepcopy(temp_list)
+            for path in all_paths:                 
+                if path[step] in next_right_bounds:                     # removes all illegal rightward moves for pieces in second column from right edge
+                    a = path[step] - path[step-1]
+                    if a in next_right_bad_moves:
+                        temp_list.remove(path) 
+            all_paths = c.deepcopy(temp_list)
+            for path in all_paths:                 
+                if path[step] in next_left_bounds:                      # removes all illegal leftward moves for pieces in second column from left edge
+                    a = path[step] - path[step-1]
+                    if a in next_left_bad_moves:
+                        temp_list.remove(path) 
+            all_paths = c.deepcopy(temp_list)
+            for path in all_paths:
+                if path[step] == dest:
+                    return step+1                                       # if one of the paths reaches the destination square, get out of the loop and return the step+1!
+        temp_list = []                                                  # if we haven't returned a value yet, go back to the top of the loop witha  clear temp list
+        moves_index = 0                                                 # start at the beginning of the moves list
+        step += 1                                                       # and carry us into the next step!
+        
+       
+""" 
+Tests:
+
+src = 23                            
+print "src: " + str(src)
+dest = 23
+print "dest: " + str(dest)
+print "answer: " + str(answer(src,dest))
+print "-------------" 
+src = 14
+print "src: " + str(src)
+dest = 23
+print "dest: " + str(dest)
+print "answer: " + str(answer(src,dest))
+print "-------------"
+src = 15
+print "src: " + str(src)
+dest = 25 
+print "dest: " + str(dest)
+print "answer: " + str(answer(src,dest))
+print "-------------"
+src = 25
+print "src: " + str(src)
+dest = 15
+print "dest: " + str(dest)
+print "answer: " + str(answer(src,dest))
+print "-------------"
+src = 62
+print "src: " + str(src)
+dest = 53
+print "dest: " + str(dest)
+print "answer: " + str(answer(src,dest))
+print "-------------"
+src = 53
+print "src: " + str(src)
+dest = 62
+print "dest: " + str(dest)
+print "answer: " + str(answer(src,dest))
+print "-------------"
+
+
+"""
