@@ -1,0 +1,63 @@
+
+def n2b(n, b):                  # convert base 10 number back to base b
+    if n == 0:                  # if base 0, return 0             
+        return 0
+    d = []
+    while n:                    # this function for numbers up to base 10, but everything after that is iffy. 
+        d.append(int(n % b))
+        n /= b
+    return ''.join(map(str,d[::-1]))
+
+
+def answer(n,b):
+    values = []                 # keeps track of all output (z) values
+    thing = ""                  
+    while thing == "":          # while we don't have answer 
+        k = len(n)
+        lst = []                    # stores each value in n
+        for value in n:
+            value = int(value)
+            lst.append(value)
+            lst = sorted(lst, reverse=True)   # sorts each value in n      
+    
+        lst = map(str,lst) 
+        x = "".join(lst)
+        y = lst[::-1]
+        y = "".join(y)
+        
+        x = int(x,b)                    # convert to base 10 for subtraction
+        y = int(y,b)                    # convert to base 10 for subtraction
+        z = x - y
+        z = n2b(z,b)                    # convert back to base b after subtraction
+        z = str(z)
+        while len(z) != k:              # add leading zeros as necessary to maintain length k of n 
+            z = "0" + z
+        values.append(z)                
+
+        for same in values:             # checks to see if any values appear 50 times
+            d = values.count(same)
+            if d >= 50:                # if any value appears 50 times, we've entered the final loop. 50 is an aribtrary number. 
+                thing = same            # as a result of entering the final loop, we exit the initial while loop       
+            else:
+                pass                    
+        n = z                           # set n to z, and loop back to the top until we break. 
+        
+    last_ten = values[-10:]                                             # pulls last 10 numbers to see if they are the same in next line
+    constant_check = all(x==last_ten[0] for x in last_ten)              # checks for a constant value as answer, such as n = "1211", b = 10
+    
+    loop_check = [i for i,val in enumerate(values) if val==thing]       # checks for a loop of values, such as when n = "210022", b = 3
+    
+    b = loop_check[3] - loop_check[2]                                  # two arbitrary indices 
+    for i in range(2, len(loop_check)):
+        if loop_check[i] - loop_check[i-1] != b:                        # make sure all indices are same difference as the two arbitrary index to ensure we are in loop
+            break
+        else:
+            answer = b                                                  # by setting answer to difference between indicies
+    
+    if constant_check == True:                                          # if its a constant value, answer amount = 1. Otherwise its the result of the differences between indexes
+        answer = 1
+    else:
+        pass
+        
+
+    return answer
